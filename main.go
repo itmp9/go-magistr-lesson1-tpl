@@ -9,16 +9,15 @@ import (
 	"time"
 )
 
-	const (
-		serverURL        = "http://srv.msk01.gigacorp.local/_stats"
-		pollInterval     = 3 * time.Second
-		loadAvgThreshold = 30
-		memoryThreshold  = 0.80
-		diskThreshold    = 0.90
-		networkThreshold = 0.90
-		maxErrors        = 3
-		epsilon          = 1e-6
-	)
+const (
+	serverURL        = "http://srv.msk01.gigacorp.local/_stats"
+	pollInterval     = 3 * time.Second
+	loadAvgThreshold = 30
+	memoryThreshold  = 0.80
+	diskThreshold    = 0.90
+	networkThreshold = 0.90
+	maxErrors        = 3
+)
 
 type ServerStats struct {
 	LoadAvg           float64
@@ -146,8 +145,7 @@ func checkThresholds(stats *ServerStats) {
 		networkUsage := float64(stats.CurrentNetwork) / float64(stats.TotalNetwork)
 		if networkUsage > networkThreshold {
 			availableBytes := stats.TotalNetwork - stats.CurrentNetwork
-			availableMbytes := float64(availableBytes) / 1000000
-			availableMbits := availableMbytes * 8
+			availableMbits := float64(availableBytes) / 1000000
 			fmt.Printf("Network bandwidth usage high: %d Mbit/s available\n", int(availableMbits))
 		}
 	}
