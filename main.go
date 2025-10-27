@@ -9,15 +9,16 @@ import (
 	"time"
 )
 
-const (
-	serverURL        = "http://srv.msk01.gigacorp.local/_stats"
-	pollInterval     = 3 * time.Second
-	loadAvgThreshold = 30
-	memoryThreshold  = 0.80
-	diskThreshold    = 0.90
-	networkThreshold = 0.90
-	maxErrors        = 3
-)
+	const (
+		serverURL        = "http://srv.msk01.gigacorp.local/_stats"
+		pollInterval     = 3 * time.Second
+		loadAvgThreshold = 30
+		memoryThreshold  = 0.80
+		diskThreshold    = 0.90
+		networkThreshold = 0.90
+		maxErrors        = 3
+		epsilon          = 1e-6
+	)
 
 type ServerStats struct {
 	LoadAvg           float64
@@ -39,6 +40,7 @@ func main() {
 			consecutiveErrors++
 			if consecutiveErrors == maxErrors {
 				fmt.Println("Unable to fetch server statistic")
+				consecutiveErrors = 0
 			}
 		} else {
 			consecutiveErrors = 0
@@ -126,7 +128,7 @@ func checkThresholds(stats *ServerStats) {
 	if stats.TotalRAM > 0 {
 		memoryUsage := float64(stats.UsedRAM) / float64(stats.TotalRAM)
 		if memoryUsage > memoryThreshold {
-			fmt.Printf("Memory usage too high: %.0f%%\n", memoryUsage*100)
+			fmt.Printf("Memory usage too high: %d%%\n", int(memoryUsage*100))
 		}
 	}
 	
@@ -135,7 +137,7 @@ func checkThresholds(stats *ServerStats) {
 		if diskUsage > diskThreshold {
 			freeBytes := stats.TotalDisk - stats.UsedDisk
 			freeMB := float64(freeBytes) / (1024 * 1024)
-			fmt.Printf("Free disk space is too low: %.0f Mb left\n", freeMB)
+			fmt.Printf("Free disk space is too low: %d Mb left\n", int(freeMB))
 		}
 	}
 	
@@ -144,8 +146,9 @@ func checkThresholds(stats *ServerStats) {
 		networkUsage := float64(stats.CurrentNetwork) / float64(stats.TotalNetwork)
 		if networkUsage > networkThreshold {
 			availableBytes := stats.TotalNetwork - stats.CurrentNetwork
-			availableMbits := float64(availableBytes) * 8 / 1000000
-			fmt.Printf("Network bandwidth usage high: %.0f Mbit/s available\n", availableMbits)
+			availableMbytes := float64(availableBytes) / 1000000
+			availableMbits := availableMbytes * 8
+			fmt.Printf("Network bandwidth usage high: %d Mbit/s available\n", int(availableMbits))
 		}
 	}
 }
